@@ -14,6 +14,10 @@ GET         /frequentlyAskedQuestions                                           
 GET         /popularQueries                                                                  controllers.AboutController.popularQueries()
 ########################################################## About ###################################################################################
 
+########################################################## Faculty ###################################################################################
+GET         /faculty                                                                         controllers.FacultyController.facultyList()
+GET         /faculty/:id                                                                     controllers.FacultyController.facultyDetail(id: Long)
+########################################################## Faculty ###################################################################################
 
 
 

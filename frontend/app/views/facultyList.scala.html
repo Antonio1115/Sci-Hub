@@ -1,0 +1,59 @@
+@()
+@import helper._
+@main("Faculty Directory") {
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <div class="card-panel">
+                    <h4 class="center">Faculty Directory</h4>
+                    <div class="row" style="margin-top: 20px;">
+                        <!-- Dummy Faculty Card 1 -->
+                        <div class="col s12 m6 l4">
+                            <div class="card hoverable">
+                                <div class="card-content center">
+                                    <img src='@routes.Assets.at("images/users/github.png")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
+                                    <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">Dr. Alan Turing</span>
+                                    <p style="color: #757575;">Computer Science</p>
+                                    <p><small>alan.turing&#64;smu.edu</small></p>
+                                </div>
+                                <div class="card-action center">
+                                    <a href="@routes.FacultyController.facultyDetail(1)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dummy Faculty Card 2 -->
+                        <div class="col s12 m6 l4">
+                            <div class="card hoverable">
+                                <div class="card-content center">
+                                    <img src='@routes.Assets.at("images/users/github.jpg")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
+                                    <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">Dr. Ada Lovelace</span>
+                                    <p style="color: #757575;">Computer Science</p>
+                                    <p><small>ada.lovelace&#64;smu.edu</small></p>
+                                </div>
+                                <div class="card-action center">
+                                    <a href="@routes.FacultyController.facultyDetail(2)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dummy Faculty Card 3 -->
+                        <div class="col s12 m6 l4">
+                            <div class="card hoverable">
+                                <div class="card-content center">
+                                    <img src='@routes.Assets.at("images/users/github.jpeg")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
+                                    <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">Dr. Grace Hopper</span>
+                                    <p style="color: #757575;">Computer Science</p>
+                                    <p><small>grace.hopper&#64;smu.edu</small></p>
+                                </div>
+                                <div class="card-action center">
+                                    <a href="@routes.FacultyController.facultyDetail(3)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
