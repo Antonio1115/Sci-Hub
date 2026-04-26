@@ -28,15 +28,17 @@ public class FacultyController extends Controller {
 
     /**
      * Lists all faculty members with name, department, research interests, and up to 5 recent publications.
+     * Supports optional filtering by name keyword (search), department, and research area.
      */
     public Result listFaculty(Optional<Integer> pageLimit, Optional<Integer> offset,
-                              Optional<String> sortCriteria) {
+                              Optional<String> sortCriteria, Optional<String> search,
+                              Optional<String> department, Optional<String> researchArea) {
         String sortOrder = Common.getSortCriteria(sortCriteria, DEFAULT_SORT);
         try {
             List<ResearcherInfo> facultyList = new ArrayList<>();
             for (ResearcherInfo info : ResearcherInfo.find.query().findList()) {
                 User user = info.getUser();
-                if (user != null && user.isResearcher()) {
+                if (user != null && user.isResearcher() && matchesFilters(info, user, search, department, researchArea)) {
                     facultyList.add(info);
                 }
             }
@@ -46,6 +48,27 @@ public class FacultyController extends Controller {
             Logger.error("FacultyController.listFaculty exception", e);
             return internalServerError("Failed to retrieve faculty list.");
         }
+    }
+
+    private boolean matchesFilters(ResearcherInfo info, User user,
+                                   Optional<String> search, Optional<String> department,
+                                   Optional<String> researchArea) {
+        if (search.isPresent() && !search.get().isEmpty()) {
+            String q = search.get().toLowerCase();
+            String fullName = ((user.getFirstName() != null ? user.getFirstName() : "") + " "
+                    + (user.getLastName() != null ? user.getLastName() : "")).toLowerCase();
+            String email = user.getEmail() != null ? user.getEmail().toLowerCase() : "";
+            if (!fullName.contains(q) && !email.contains(q)) return false;
+        }
+        if (department.isPresent() && !department.get().isEmpty()) {
+            String dept = info.getDepartment() != null ? info.getDepartment().toLowerCase() : "";
+            if (!dept.contains(department.get().toLowerCase())) return false;
+        }
+        if (researchArea.isPresent() && !researchArea.get().isEmpty()) {
+            String fields = info.getResearchFields() != null ? info.getResearchFields().toLowerCase() : "";
+            if (!fields.contains(researchArea.get().toLowerCase())) return false;
+        }
+        return true;
     }
 
     /**

@@ -1,4 +1,4 @@
-@(id: Long)
+@(id: Long, faculty: com.fasterxml.jackson.databind.JsonNode)
 @import helper._
 @main("Faculty Profile") {
     <div class="container">
@@ -6,45 +6,97 @@
             <div class="col s12">
                 <div class="card-panel">
                     <h4 class="center">Faculty Profile</h4>
-                    <div class="row" style="margin-top: 30px;">
-                        <div class="col s12 m4">
-                            <div class="center">
-                                <img class="circle" src='@routes.Assets.at("images/users/github.png")' style="border-width: 1px; border-style: solid; border-color: #e0e0e0; border-radius: 50%; width: 70%; max-width: 200px;">
+                    @if(faculty == null || faculty.has("error")) {
+                        <div class="center" style="padding: 40px 0;">
+                            <i class="material-icons large grey-text">person_off</i>
+                            <p class="grey-text">Faculty member not found.</p>
+                        </div>
+                    } else {
+                        <div class="row" style="margin-top: 30px;">
+                            <div class="col s12 m4">
+                                <div class="center">
+                                    @defining(if(faculty.has("avatar") && faculty.get("avatar").asText.nonEmpty) faculty.get("avatar").asText else "") { avatarUrl =>
+                                        @if(avatarUrl.nonEmpty) {
+                                            <img class="circle" src="@avatarUrl" style="border-width: 1px; border-style: solid; border-color: #e0e0e0; border-radius: 50%; width: 70%; max-width: 200px; object-fit: cover;">
+                                        } else {
+                                            <img class="circle" src='@routes.Assets.at("images/users/github.png")' style="border-width: 1px; border-style: solid; border-color: #e0e0e0; border-radius: 50%; width: 70%; max-width: 200px;">
+                                        }
+                                    }
+                                </div>
+                            </div>
+                            <div class="col s12 m8">
+                                <table class="striped responsive-table">
+                                    <tbody>
+                                        <tr>
+                                            <th style="width: 150px;">Faculty ID</th>
+                                            <td>@faculty.get("id").asLong</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Name</th>
+                                            <td>
+                                                @defining(faculty.get("firstName").asText) { fn =>
+                                                    @if(fn.nonEmpty){Dr. }@fn @faculty.get("lastName").asText
+                                                }
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th>Department</th>
+                                            <td>@faculty.get("department").asText</td>
+                                        </tr>
+                                        <tr>
+                                            <th>School</th>
+                                            <td>@faculty.get("school").asText</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Email</th>
+                                            <td>@faculty.get("email").asText</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Research Areas</th>
+                                            <td>@faculty.get("researchFields").asText</td>
+                                        </tr>
+                                        <tr>
+                                            <th>Highest Degree</th>
+                                            <td>@faculty.get("highestDegree").asText</td>
+                                        </tr>
+                                        @defining(faculty.get("orcid").asText) { orcid =>
+                                            @if(orcid.nonEmpty) {
+                                                <tr>
+                                                    <th>ORCID</th>
+                                                    <td>@orcid</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
-                        <div class="col s12 m8">
-                            <table class="striped responsive-table">
-                                <tbody>
-                                    <tr>
-                                        <th style="width: 150px;">Faculty ID</th>
-                                        <td>@id</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Name</th>
-                                        <td>Dr. Example Faculty @id</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Department</th>
-                                        <td>Computer Science</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Email</th>
-                                        <td>faculty.member@id&#64;smu.edu</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Research Areas</th>
-                                        <td>Artificial Intelligence, Machine Learning, Data Mining</td>
-                                    </tr>
-                                    <tr>
-                                        <th>Personal URL</th>
-                                        <td><a href="#" target="_blank" class="blue-text text-darken-2">https://example.com/faculty/@id</a></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+
+                        @defining(faculty.get("recentPublications")) { pubs =>
+                            @if(pubs != null && pubs.isArray && pubs.size > 0) {
+                                <div class="row" style="margin-top: 20px;">
+                                    <div class="col s12">
+                                        <h5>Recent Publications</h5>
+                                        <ul class="collection">
+                                            @for(i <- 0 until pubs.size) {
+                                                @defining(pubs.get(i)) { pub =>
+                                                    <li class="collection-item">
+                                                        <span class="title" style="font-weight: bold;">@pub.get("title").asText</span>
+                                                        @defining(pub.get("year").asText) { yr =>
+                                                            @if(yr.nonEmpty) {<span class="grey-text"> (@yr)</span>}
+                                                        }
+                                                    </li>
+                                                }
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    }
+
                     <div class="row center" style="margin-top: 40px; margin-bottom: 20px;">
-                        <a href="@routes.FacultyController.facultyList()" class="btn waves-effect waves-light blue darken-2" style="border-radius: 20px;">
+                        <a href="/faculty" class="btn waves-effect waves-light blue darken-2" style="border-radius: 20px;">
                             <i class="material-icons left">arrow_back</i>Back to Directory
                         </a>
                     </div>
