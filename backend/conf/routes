@@ -405,7 +405,7 @@ POST          /author/linkResearchers                                           
 ################################## Authors #############################################################################
 
 #################################### Faculty #####################################################################
-GET           /faculty                                                                                             controllers.FacultyController.listFaculty(pageLimit: java.util.Optional[Integer], offset: java.util.Optional[Integer], sortCriteria: java.util.Optional[String])
+GET           /faculty                                                                                             controllers.FacultyController.listFaculty(pageLimit: java.util.Optional[Integer], offset: java.util.Optional[Integer], sortCriteria: java.util.Optional[String], search: java.util.Optional[String], department: java.util.Optional[String], researchArea: java.util.Optional[String])
 GET           /faculty/:id                                                                                        controllers.FacultyController.facultyDetail(id: Long)
 #################################### Faculty #####################################################################
 

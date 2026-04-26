@@ -1,4 +1,4 @@
-@()
+@(items: com.fasterxml.jackson.databind.JsonNode, search: String, department: String, researchArea: String)
 @import helper._
 @main("Faculty Directory") {
     <div class="container">
@@ -6,52 +6,89 @@
             <div class="col s12">
                 <div class="card-panel">
                     <h4 class="center">Faculty Directory</h4>
-                    <div class="row" style="margin-top: 20px;">
-                        <!-- Dummy Faculty Card 1 -->
-                        <div class="col s12 m6 l4">
-                            <div class="card hoverable">
-                                <div class="card-content center">
-                                    <img src='@routes.Assets.at("images/users/github.png")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
-                                    <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">Dr. Alan Turing</span>
-                                    <p style="color: #757575;">Computer Science</p>
-                                    <p><small>alan.turing&#64;smu.edu</small></p>
-                                </div>
-                                <div class="card-action center">
-                                    <a href="@routes.FacultyController.facultyDetail(1)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
-                                </div>
+
+                    <!-- Search and Filter Form -->
+                    <form method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;">
+                        <div class="row" style="margin-bottom: 0;">
+                            <div class="input-field col s12 m4">
+                                <i class="material-icons prefix">search</i>
+                                <input id="search" type="text" name="search" value="@search">
+                                <label for="search" class="@if(!search.isEmpty){active}">Search by name</label>
+                            </div>
+                            <div class="input-field col s12 m4">
+                                <i class="material-icons prefix">business</i>
+                                <input id="department" type="text" name="department" value="@department">
+                                <label for="department" class="@if(!department.isEmpty){active}">Filter by department</label>
+                            </div>
+                            <div class="input-field col s12 m4">
+                                <i class="material-icons prefix">biotech</i>
+                                <input id="researchArea" type="text" name="researchArea" value="@researchArea">
+                                <label for="researchArea" class="@if(!researchArea.isEmpty){active}">Filter by research area</label>
                             </div>
                         </div>
-                        
-                        <!-- Dummy Faculty Card 2 -->
-                        <div class="col s12 m6 l4">
-                            <div class="card hoverable">
-                                <div class="card-content center">
-                                    <img src='@routes.Assets.at("images/users/github.jpg")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
-                                    <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">Dr. Ada Lovelace</span>
-                                    <p style="color: #757575;">Computer Science</p>
-                                    <p><small>ada.lovelace&#64;smu.edu</small></p>
-                                </div>
-                                <div class="card-action center">
-                                    <a href="@routes.FacultyController.facultyDetail(2)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
-                                </div>
-                            </div>
+                        <div class="row center" style="margin-bottom: 10px;">
+                            <button type="submit" class="btn waves-effect waves-light blue darken-2" style="margin-right: 8px;">
+                                <i class="material-icons left">search</i>Search
+                            </button>
+                            <a href="/faculty" class="btn waves-effect waves-light grey darken-1">
+                                <i class="material-icons left">clear</i>Clear
+                            </a>
                         </div>
-                        
-                        <!-- Dummy Faculty Card 3 -->
-                        <div class="col s12 m6 l4">
-                            <div class="card hoverable">
-                                <div class="card-content center">
-                                    <img src='@routes.Assets.at("images/users/github.jpeg")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
-                                    <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">Dr. Grace Hopper</span>
-                                    <p style="color: #757575;">Computer Science</p>
-                                    <p><small>grace.hopper&#64;smu.edu</small></p>
-                                </div>
-                                <div class="card-action center">
-                                    <a href="@routes.FacultyController.facultyDetail(3)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
-                                </div>
+                    </form>
+
+                    <!-- Faculty Cards -->
+                    <div class="row" style="margin-top: 10px;">
+                        @if(items == null || !items.isArray || items.size == 0) {
+                            <div class="col s12 center" style="padding: 40px 0;">
+                                <i class="material-icons large grey-text">person_search</i>
+                                <p class="grey-text">No faculty members found matching your search.</p>
                             </div>
-                        </div>
+                        } else {
+                            @for(i <- 0 until items.size) {
+                                @defining(items.get(i)) { f =>
+                                    <div class="col s12 m6 l4">
+                                        <div class="card hoverable">
+                                            <div class="card-content center">
+                                                @defining(if(f.has("avatar") && f.get("avatar").asText.nonEmpty) f.get("avatar").asText else "") { avatarUrl =>
+                                                    @if(avatarUrl.nonEmpty) {
+                                                        <img src="@avatarUrl" alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px; object-fit: cover;">
+                                                    } else {
+                                                        <img src='@routes.Assets.at("images/users/github.png")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
+                                                    }
+                                                }
+                                                <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">
+                                                    @defining(f.get("firstName").asText) { fn =>
+                                                        @defining(f.get("lastName").asText) { ln =>
+                                                            @if(fn.nonEmpty){Dr. }@fn @ln
+                                                        }
+                                                    }
+                                                </span>
+                                                @defining(f.get("department").asText) { dept =>
+                                                    @if(dept.nonEmpty) {
+                                                        <p style="color: #757575;">@dept</p>
+                                                    }
+                                                }
+                                                @defining(f.get("researchFields").asText) { rf =>
+                                                    @if(rf.nonEmpty) {
+                                                        <p><small class="grey-text">@rf</small></p>
+                                                    }
+                                                }
+                                                @defining(f.get("email").asText) { em =>
+                                                    @if(em.nonEmpty) {
+                                                        <p><small>@em</small></p>
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="card-action center">
+                                                <a href="@routes.FacultyController.facultyDetail(f.get("id").asLong)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
                     </div>
+
                 </div>
             </div>
         </div>
