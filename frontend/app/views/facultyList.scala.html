@@ -1,14 +1,41 @@
 @(items: com.fasterxml.jackson.databind.JsonNode, search: String, department: String, researchArea: String)
 @import helper._
 @main("Faculty Directory") {
+    <script src='@routes.Assets.at("javascripts/plugins/jqcloud.min.js")'></script>
+    <style>
+        #word-cloud-container {
+            width: 100%;
+            height: 320px;
+            position: relative;
+        }
+        #word-cloud-container span {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        #word-cloud-container span:hover {
+            opacity: 0.7;
+        }
+    </style>
     <div class="container">
+
+        <!-- Research Interest Word Cloud -->
+        <div class="row" style="margin-bottom: 0;">
+            <div class="col s12">
+                <div class="card-panel">
+                    <h5 class="center blue-text text-darken-2">Research Interest Cloud</h5>
+                    <p class="center grey-text" style="margin-top: 0; font-size: 0.9em;">Click a keyword to filter faculty by research area</p>
+                    <div id="word-cloud-container"></div>
+                </div>
+            </div>
+        </div>
+
         <div class="row">
             <div class="col s12">
                 <div class="card-panel">
                     <h4 class="center">Faculty Directory</h4>
 
                     <!-- Search and Filter Form -->
-                    <form method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;">
+                    <form id="faculty-filter-form" method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;">
                         <div class="row" style="margin-bottom: 0;">
                             <div class="input-field col s12 m4">
                                 <i class="material-icons prefix">search</i>
@@ -93,4 +120,54 @@
             </div>
         </div>
     </div>
+
+    <script>
+    (function() {
+        var facultyData = @Html(if (items != null && items.isArray) items.toString else "[]");
+        var wordMap = {};
+
+        for (var i = 0; i < facultyData.length; i++) {
+            var rf = facultyData[i].researchFields || "";
+            if (rf) {
+                var keywords = rf.split(/[,;]+/);
+                for (var j = 0; j < keywords.length; j++) {
+                    var kw = keywords[j].trim();
+                    if (kw.length > 1) {
+                        wordMap[kw] = (wordMap[kw] || 0) + 1;
+                    }
+                }
+            }
+        }
+
+        var wordArray = [];
+        for (var word in wordMap) {
+            if (wordMap.hasOwnProperty(word)) {
+                wordArray.push({
+                    text: word,
+                    weight: wordMap[word],
+                    handlers: {
+                        click: function() {
+                            var keyword = $(this).text();
+                            $("#researchArea").val(keyword);
+                            Materialize.updateTextFields();
+                            $("#faculty-filter-form").submit();
+                        }
+                    }
+                });
+            }
+        }
+
+        if (wordArray.length > 0) {
+            $("#word-cloud-container").jQCloud(wordArray, {
+                width: $("#word-cloud-container").width(),
+                height: 320,
+                autoResize: true,
+                colors: ["#0D47A1", "#1565C0", "#1976D2", "#1E88E5", "#2196F3", "#42A5F5", "#64B5F6", "#90CAF9", "#BBDEFB", "#E3F2FD"],
+                fontSize: { from: 0.12, to: 0.035 }
+            });
+        } else {
+            $("#word-cloud-container").closest(".card-panel").hide();
+        }
+    })();
+    </script>
 }
