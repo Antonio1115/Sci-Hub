@@ -401,6 +401,7 @@ GET           /author/userListAdmin                                             
 
 POST          /author/search                                                                              controllers.AuthorController.searchAuthorByCondition(pageLimit: java.util.Optional[Integer], offset: java.util.Optional[Integer], sortCriteria: java.util.Optional[String])
 GET           /author/topAuthors                                                                                      controllers.AuthorController.topAuthors()
+POST          /author/linkResearchers                                                                              controllers.AuthorController.linkResearchersToAuthors(overwriteExisting: java.util.Optional[java.lang.Boolean])
 ################################## Authors #############################################################################
 
 #################################### Reviewer #####################################################################
