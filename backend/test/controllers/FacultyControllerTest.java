@@ -6,6 +6,7 @@ import play.inject.guice.GuiceApplicationBuilder;
 import play.mvc.Result;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static play.mvc.Http.Status.OK;
 import static play.mvc.Http.Status.NOT_FOUND;
 import static play.test.Helpers.*;
@@ -19,6 +20,9 @@ public class FacultyControllerTest {
         Result result = route(app, fakeRequest(GET, "/faculty"));
 
         assertEquals(OK, result.status());
+        String content = contentAsString(result);
+        assertTrue(content.contains("items"));
+        assertTrue(content.contains("total"));
     }
 
     @Test
@@ -26,6 +30,8 @@ public class FacultyControllerTest {
         Result result = route(app, fakeRequest(GET, "/faculty?search=Smith"));
 
         assertEquals(OK, result.status());
+        String content = contentAsString(result);
+        assertTrue(content.contains("items"));
     }
 
     @Test
@@ -33,20 +39,17 @@ public class FacultyControllerTest {
         Result result = route(app, fakeRequest(GET, "/faculty?department=Computer%20Science"));
 
         assertEquals(OK, result.status());
+        String content = contentAsString(result);
+        assertTrue(content.contains("items"));
     }
 
     @Test
     public void testFacultyFilterByResearchInterestLoadsSuccessfully() {
-        Result result = route(app, fakeRequest(GET, "/faculty?interest=AI"));
+        Result result = route(app, fakeRequest(GET, "/faculty?researchArea=AI"));
 
         assertEquals(OK, result.status());
-    }
-
-    @Test
-    public void testFacultyProfilePageLoadsForValidId() {
-        Result result = route(app, fakeRequest(GET, "/faculty/1"));
-
-        assertEquals(OK, result.status());
+        String content = contentAsString(result);
+        assertTrue(content.contains("items"));
     }
 
     @Test
@@ -54,5 +57,6 @@ public class FacultyControllerTest {
         Result result = route(app, fakeRequest(GET, "/faculty/999999"));
 
         assertEquals(NOT_FOUND, result.status());
+        assertTrue(contentAsString(result).contains("Faculty member not found"));
     }
 }

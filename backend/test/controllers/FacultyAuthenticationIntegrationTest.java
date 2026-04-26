@@ -10,6 +10,7 @@ import play.mvc.Result;
 import static org.junit.Assert.assertEquals;
 import static play.mvc.Http.Status.OK;
 import static play.test.Helpers.*;
+import play.test.Helpers;
 
 public class FacultyAuthenticationIntegrationTest {
 

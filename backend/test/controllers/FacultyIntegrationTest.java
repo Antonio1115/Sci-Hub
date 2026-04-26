@@ -6,8 +6,10 @@ import play.inject.guice.GuiceApplicationBuilder;
 import play.mvc.Result;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static play.mvc.Http.Status.OK;
 import static play.test.Helpers.GET;
+import static play.test.Helpers.contentAsString;
 import static play.test.Helpers.fakeRequest;
 import static play.test.Helpers.route;
 
@@ -20,6 +22,7 @@ public class FacultyIntegrationTest {
         Result result = route(app, fakeRequest(GET, "/faculty?search=Ada"));
 
         assertEquals(OK, result.status());
+        assertTrue(contentAsString(result).contains("items"));
     }
 
     @Test
@@ -27,6 +30,7 @@ public class FacultyIntegrationTest {
         Result result = route(app, fakeRequest(GET, "/faculty?department=Computer%20Science"));
 
         assertEquals(OK, result.status());
+        assertTrue(contentAsString(result).contains("items"));
     }
 
     @Test
@@ -34,5 +38,6 @@ public class FacultyIntegrationTest {
         Result result = route(app, fakeRequest(GET, "/faculty?researchArea=Machine%20Learning"));
 
         assertEquals(OK, result.status());
+        assertTrue(contentAsString(result).contains("items"));
     }
 }
