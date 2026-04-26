@@ -10,6 +10,7 @@ import models.rest.RESTResponse;
 import play.libs.Json;
 import utils.Common;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,6 +21,8 @@ public class FacultyService {
 
     public RESTResponse paginateResults(List<ResearcherInfo> facultyList, Optional<Integer> offset,
                                         Optional<Integer> pageLimit, String sortCriteria) {
+        sortFacultyList(facultyList, sortCriteria);
+
         RESTResponse response = new RESTResponse();
         int maxRows = facultyList.size();
         if (pageLimit.isPresent()) maxRows = pageLimit.get();
@@ -35,6 +38,26 @@ public class FacultyService {
         response.setOffset(startIndex);
         response.setItems(toJsonArray(paginated, false));
         return response;
+    }
+
+    private void sortFacultyList(List<ResearcherInfo> list, String sortCriteria) {
+        Comparator<ResearcherInfo> comparator;
+        switch (sortCriteria) {
+            case "firstName":
+                comparator = Comparator.comparing(
+                        i -> i.getUser() != null && i.getUser().getFirstName() != null
+                                ? i.getUser().getFirstName().toLowerCase() : "");
+                break;
+            case "department":
+                comparator = Comparator.comparing(
+                        i -> i.getDepartment() != null ? i.getDepartment().toLowerCase() : "");
+                break;
+            default:
+                comparator = Comparator.comparing(
+                        i -> i.getUser() != null && i.getUser().getLastName() != null
+                                ? i.getUser().getLastName().toLowerCase() : "");
+        }
+        list.sort(comparator);
     }
 
     public ObjectNode toFacultyJson(ResearcherInfo info, boolean fullPublications) {

@@ -431,6 +431,12 @@ GET        /paper/ldaTopicDistribution                                          
 GET         /paper/searchPage                                                                   controllers.PaperController.searchPage()
 POST        /paper/searchPaper                                                                 controllers.PaperController.searchPaper(pageNum: Integer ?= 1, sortCriteria: String ?="id")
 
+########################################################## Faculty #####################################################################
+GET         /faculty/list/:pageNum                                                          controllers.FacultyController.facultyListPage(pageNum: Integer, sortCriteria: String ?= "lastName")
+POST        /faculty/searchPOST                                                             controllers.FacultyController.facultySearchPOST(pageNum: Integer ?= 1, sortCriteria: String ?= "lastName")
+GET         /faculty/detail/:facultyId                                                      controllers.FacultyController.facultyDetailPage(facultyId: Long)
+########################################################## Faculty #####################################################################
+
 ########################################################## Graph #####################################################################
 GET         /graphs/research                                                                controllers.GraphController.researchInterest()
 GET         /file/:tableName/:challengeFileType/:tableRecorderId                            controllers.FileController.getFile(tableName: String, challengeFileType: String, tableRecorderId: String)

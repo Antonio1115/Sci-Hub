@@ -1,0 +1,237 @@
+@(entries: List[models.FacultyMember],
+  listType: String,
+  pageNum: Integer,
+  sort: String,
+  offset: Integer,
+  total: Integer,
+  count: Integer,
+  pageLimit: Integer,
+  searchName: String,
+  searchDept: String,
+  searchArea: String,
+  beginIndexForPagination: Integer,
+  endIndexForPagination: Integer)
+
+@scripts = {
+    <link rel="stylesheet" href="/assets/stylesheets/responsive-table.css">
+    <script type="text/javascript">
+        var currentSort = { criteria: '@sort', order: 'asc' };
+
+        function sortTable(criteria) {
+            var table = $('#facultyTable tbody');
+            var rows = table.find('tr').get();
+            var order = 'asc';
+            if (currentSort.criteria === criteria) {
+                order = currentSort.order === 'asc' ? 'desc' : 'asc';
+            }
+            rows.sort(function(a, b) {
+                var keyA = ($(a).data('sort-' + criteria) || '').toString().toLowerCase();
+                var keyB = ($(b).data('sort-' + criteria) || '').toString().toLowerCase();
+                if (order === 'asc') return keyA < keyB ? -1 : keyA > keyB ? 1 : 0;
+                return keyA > keyB ? -1 : keyA < keyB ? 1 : 0;
+            });
+            $.each(rows, function(i, row) { table.append(row); });
+            currentSort.criteria = criteria;
+            currentSort.order = order;
+            $('#sortIconName').text('arrow_upward');
+            $('#sortIconDept').text('arrow_upward');
+            if (criteria === 'name') $('#sortIconName').text(order === 'asc' ? 'arrow_upward' : 'arrow_downward');
+            if (criteria === 'department') $('#sortIconDept').text(order === 'asc' ? 'arrow_upward' : 'arrow_downward');
+        }
+
+        function submitSearchFromHidden(pageNum, sortCriteria, name, dept, area) {
+            pageNum = Math.floor(pageNum);
+            var url = '/faculty/searchPOST?pageNum=' + pageNum + '&sortCriteria=' + sortCriteria;
+            var form = $('<form>').attr('action', url).attr('method', 'POST').css('display', 'none');
+            form.append($('<input>').attr('type', 'hidden').attr('name', 'name').val(name));
+            form.append($('<input>').attr('type', 'hidden').attr('name', 'department').val(dept));
+            form.append($('<input>').attr('type', 'hidden').attr('name', 'researchArea').val(area));
+            form.appendTo(document.body).submit();
+        }
+
+        $(document).ready(function() {
+            $('.tooltipped').tooltip();
+            $('.dropdown-trigger').dropdown();
+        });
+    </script>
+}
+
+@main("Faculty List", scripts) {
+    <div class="container">
+        <div class="card-panel">
+            <h4 class="center">Faculty Directory</h4>
+
+            <div class="row">
+                <form method="POST" action="@routes.FacultyController.facultySearchPOST(1, sort)">
+                    <div class="col s12 m4">
+                        <div class="input-field">
+                            <i class="material-icons prefix">person</i>
+                            <input type="text" id="searchName" name="name" value="@searchName">
+                            <label for="searchName" @if(searchName != null && !searchName.isEmpty){class="active"}>Search by Name</label>
+                        </div>
+                    </div>
+                    <div class="col s12 m4">
+                        <div class="input-field">
+                            <i class="material-icons prefix">business</i>
+                            <input type="text" id="searchDept" name="department" value="@searchDept">
+                            <label for="searchDept" @if(searchDept != null && !searchDept.isEmpty){class="active"}>Filter by Department</label>
+                        </div>
+                    </div>
+                    <div class="col s12 m4">
+                        <div class="input-field">
+                            <i class="material-icons prefix">science</i>
+                            <input type="text" id="searchArea" name="researchArea" value="@searchArea">
+                            <label for="searchArea" @if(searchArea != null && !searchArea.isEmpty){class="active"}>Filter by Research Area</label>
+                        </div>
+                    </div>
+                    <div class="col s12 center" style="margin-top: 8px;">
+                        <button class="btn waves-effect waves-light blue darken-2" type="submit">
+                            <i class="material-icons left">search</i>Search
+                        </button>
+                        <a href="@routes.FacultyController.facultyListPage(1, "lastName")"
+                           class="btn waves-effect waves-light grey darken-1" style="margin-left: 8px;">
+                            Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            @if(entries.size() > 0) {
+                <div class="row" style="margin-top: 16px;">
+                    <div class="col s6">
+                        <h6 class="left">
+                            Showing @{offset + 1} to @{offset + count} of @total result@if(total != 1){s}
+                        </h6>
+                    </div>
+                    <div class="col s6">
+                        <a class="dropdown-trigger btn-flat right" href="#" data-target="sortDropdown"
+                           style="text-transform: none; font-weight: bold; color: black;">
+                            Sort By: &nbsp;
+                            <font color="#3a5dc3">
+                                @if(sort == "department"){ Department } else { Name }
+                            </font>
+                            <i class="material-icons right">expand_more</i>
+                        </a>
+                        <ul id="sortDropdown" class="dropdown-content">
+                            @if(listType == "all") {
+                                <li><a href="#" onclick="sortTable('name')">
+                                    <i class="material-icons">sort_by_alpha</i>Name
+                                    <i class="material-icons tiny" id="sortIconName">arrow_upward</i>
+                                </a></li>
+                                <li><a href="#" onclick="sortTable('department')">
+                                    <i class="material-icons">business</i>Department
+                                    <i class="material-icons tiny" id="sortIconDept">arrow_upward</i>
+                                </a></li>
+                            } else {
+                                <li><a href="#!" onclick="submitSearchFromHidden(1, 'lastName', '@searchName', '@searchDept', '@searchArea')">
+                                    <i class="material-icons">sort_by_alpha</i>Name
+                                </a></li>
+                                <li><a href="#!" onclick="submitSearchFromHidden(1, 'department', '@searchName', '@searchDept', '@searchArea')">
+                                    <i class="material-icons">business</i>Department
+                                </a></li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="centered responsive-table striped" id="facultyTable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Department</th>
+                                <th>Research Areas</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @for(entry <- entries) {
+                            <tr data-sort-name="@entry.getFullName()" data-sort-department="@entry.getDepartment()">
+                                <td>
+                                    <a href="@routes.FacultyController.facultyDetailPage(entry.getId())">
+                                        @entry.getFullName()
+                                    </a>
+                                </td>
+                                <td>@if(entry.getDepartment() != null && entry.getDepartment() != ""){@entry.getDepartment()}else{-}</td>
+                                <td>@if(entry.getResearchFields() != null && entry.getResearchFields() != ""){@entry.getResearchFields()}else{-}</td>
+                                <td>@if(entry.getEmail() != null && entry.getEmail() != ""){@entry.getEmail()}else{-}</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row">
+                    <div class="col s12">
+                        <ul class="pagination center-align">
+                        @if(listType == "all") {
+                            @if(pageNum == 1) {
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">first_page</i></li>
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">chevron_left</i></li>
+                            } else {
+                                <li class="waves-effect"><a href="@routes.FacultyController.facultyListPage(1, sort)"><i class="material-icons">first_page</i></a></li>
+                                <li class="waves-effect"><a href="@routes.FacultyController.facultyListPage(pageNum - 1, sort)"><i class="material-icons">chevron_left</i></a></li>
+                            }
+                            @if(beginIndexForPagination > 1){
+                                <li class="waves-effect" style="cursor:pointer;font-size:20px;font-weight:bold">...</li>
+                            }
+                            @for(i <- (beginIndexForPagination + 0) to (endIndexForPagination + 0)) {
+                                <li @if(pageNum == i){class="active"}><a href="@routes.FacultyController.facultyListPage(i, sort)">@i</a></li>
+                            }
+                            @if(endIndexForPagination < ((total - 1) / pageLimit + 1)){
+                                <li class="waves-effect" style="cursor:pointer;font-size:20px;font-weight:bold">...</li>
+                            }
+                            @if((offset + count) >= total) {
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">chevron_right</i></li>
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">last_page</i></li>
+                            } else {
+                                <li class="waves-effect"><a href="@routes.FacultyController.facultyListPage(pageNum + 1, sort)"><i class="material-icons">chevron_right</i></a></li>
+                                <li class="waves-effect"><a href="@routes.FacultyController.facultyListPage((total - 1) / pageLimit + 1, sort)"><i class="material-icons">last_page</i></a></li>
+                            }
+                        } else {
+                            @if(pageNum == 1) {
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">first_page</i></li>
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">chevron_left</i></li>
+                            } else {
+                                <li class="waves-effect"><a href="#!" onclick="submitSearchFromHidden(1, '@sort', '@searchName', '@searchDept', '@searchArea')"><i class="material-icons">first_page</i></a></li>
+                                <li class="waves-effect"><a href="#!" onclick="submitSearchFromHidden(@{pageNum - 1}, '@sort', '@searchName', '@searchDept', '@searchArea')"><i class="material-icons">chevron_left</i></a></li>
+                            }
+                            @if(beginIndexForPagination > 1){
+                                <li class="waves-effect" style="cursor:pointer;font-size:20px;font-weight:bold">...</li>
+                            }
+                            @for(i <- (beginIndexForPagination + 0) to (endIndexForPagination + 0)) {
+                                <li @if(pageNum == i){class="active"}>
+                                    <a href="#!" onclick="submitSearchFromHidden(@i, '@sort', '@searchName', '@searchDept', '@searchArea')">@i</a>
+                                </li>
+                            }
+                            @if(endIndexForPagination < ((total - 1) / pageLimit + 1)){
+                                <li class="waves-effect" style="cursor:pointer;font-size:20px;font-weight:bold">...</li>
+                            }
+                            @if((offset + count) >= total) {
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">chevron_right</i></li>
+                                <li class="waves-effect disabled" style="color:#c3bfbf;"><i class="material-icons">last_page</i></li>
+                            } else {
+                                <li class="waves-effect"><a href="#!" onclick="submitSearchFromHidden(@{pageNum + 1}, '@sort', '@searchName', '@searchDept', '@searchArea')"><i class="material-icons">chevron_right</i></a></li>
+                                <li class="waves-effect"><a href="#!" onclick="submitSearchFromHidden(@{(total - 1) / pageLimit + 1}, '@sort', '@searchName', '@searchDept', '@searchArea')"><i class="material-icons">last_page</i></a></li>
+                            }
+                        }
+                        </ul>
+                    </div>
+                </div>
+
+            } else {
+                <div class="center" style="padding: 48px 0;">
+                    <i class="material-icons large grey-text">person_search</i>
+                    <h5 class="grey-text">No faculty members found.</h5>
+                    @if((searchName != null && !searchName.isEmpty) || (searchDept != null && !searchDept.isEmpty) || (searchArea != null && !searchArea.isEmpty)) {
+                        <p class="grey-text">Try adjusting your search criteria.</p>
+                        <a href="@routes.FacultyController.facultyListPage(1, "lastName")"
+                           class="btn waves-effect waves-light blue darken-2">
+                            View All Faculty
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}

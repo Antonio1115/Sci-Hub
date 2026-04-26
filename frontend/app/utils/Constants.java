@@ -762,6 +762,12 @@ public class Constants {
     public static final String ADD_ALL_REVIEWERS= "/reviewer/addAll";
 
 
+    /*================================================= Faculty =======================================================*/
+    public static final String FACULTY_LIST = "/faculty";
+    public static final String FACULTY_SEARCH = "/faculty/search";
+    public static final String FACULTY_DETAIL = "/faculty/";
+    /*================================================= Faculty =======================================================*/
+
     /*================================================= Papers =======================================================*/
 
     public static final String PAPER_REGISTER_POST= "/paper/addPaper";
