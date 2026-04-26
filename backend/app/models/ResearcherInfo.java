@@ -29,6 +29,9 @@ public class ResearcherInfo extends Model {
     
     private String department;
 
+    @Transient
+    private Long authorId;
+
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id")
     private User user;
@@ -40,6 +43,17 @@ public class ResearcherInfo extends Model {
         this.orcid = orcid;
         this.school = school;
         this.department = department;
+    }
+
+    public Author getAuthor() {
+        if (authorId == null) {
+            return null;
+        }
+        return Author.find.byId(authorId);
+    }
+
+    public void setAuthor(Author author) {
+        this.authorId = author == null ? null : author.getId();
     }
 
     /************************************* End of Constructors ********************************************************/

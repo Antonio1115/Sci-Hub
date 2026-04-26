@@ -588,9 +588,12 @@ create table researcher_info
     research_fields varchar(255) null,
     school          varchar(255) null,
     department      varchar(255) null,
+    author_id       bigint       null,
     user_id         bigint       null,
     constraint uq_researcher_info_user_id
         unique (user_id),
+    constraint fk_researcher_info_author_id
+        foreign key (author_id) references author (id),
     constraint fk_researcher_info_user_id
         foreign key (user_id) references user (id)
 );

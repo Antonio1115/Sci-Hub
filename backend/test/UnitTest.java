@@ -8,8 +8,8 @@ import org.junit.Ignore;
 
 import java.util.concurrent.CompletionStage;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static play.test.Helpers.contentAsString;
 
 /**
@@ -18,11 +18,11 @@ import static play.test.Helpers.contentAsString;
  * https://www.playframework.com/documentation/latest/JavaTest
  */
 public class UnitTest {
-@Ignore
+    @Ignore
     @Test
     public void simpleCheck() {
         int a = 1 + 1;
-        assertThat(a).isEqualTo(2);
+        assertEquals(2, a);
     }
 
     // Unit test a controller
@@ -31,13 +31,13 @@ public class UnitTest {
     public void testCount() {
         final CountController controller = new CountController(() -> 49);
         Result result = controller.count();
-        assertThat(contentAsString(result)).isEqualTo("49");
+        assertEquals("49", contentAsString(result));
     }
 
     // Unit test a controller with async return
     @Ignore
     @Test
-    public void testAsync() {
+    public void testAsync() throws Exception {
         final ActorSystem actorSystem = ActorSystem.create("test");
         try {
             final ExecutionContextExecutor ec = actorSystem.dispatcher();
@@ -45,11 +45,8 @@ public class UnitTest {
             final CompletionStage<Result> future = controller.message();
 
             // Block until the result is completed
-            await().until(() -> {
-                assertThat(future.toCompletableFuture()).isCompletedWithValueMatching(result -> {
-                    return contentAsString(result).equals("Hi!");
-                });
-            });
+            Result result = future.toCompletableFuture().get();
+            assertEquals("Hi!", contentAsString(result));
         } finally {
             actorSystem.terminate();
         }

@@ -401,7 +401,13 @@ GET           /author/userListAdmin                                             
 
 POST          /author/search                                                                              controllers.AuthorController.searchAuthorByCondition(pageLimit: java.util.Optional[Integer], offset: java.util.Optional[Integer], sortCriteria: java.util.Optional[String])
 GET           /author/topAuthors                                                                                      controllers.AuthorController.topAuthors()
+POST          /author/linkResearchers                                                                              controllers.AuthorController.linkResearchersToAuthors(overwriteExisting: java.util.Optional[java.lang.Boolean])
 ################################## Authors #############################################################################
+
+#################################### Faculty #####################################################################
+GET           /faculty                                                                                             controllers.FacultyController.listFaculty(pageLimit: java.util.Optional[Integer], offset: java.util.Optional[Integer], sortCriteria: java.util.Optional[String], search: java.util.Optional[String], department: java.util.Optional[String], researchArea: java.util.Optional[String])
+GET           /faculty/:id                                                                                        controllers.FacultyController.facultyDetail(id: Long)
+#################################### Faculty #####################################################################
 
 #################################### Reviewer #####################################################################
 POST          /reviewer/addReviewer                                                                                      controllers.ReviewerController.addReviewer

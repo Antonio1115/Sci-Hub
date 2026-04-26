@@ -1,0 +1,173 @@
+@(items: com.fasterxml.jackson.databind.JsonNode, search: String, department: String, researchArea: String)
+@import helper._
+@main("Faculty Directory") {
+    <script src='@routes.Assets.at("javascripts/plugins/jqcloud.min.js")'></script>
+    <style>
+        #word-cloud-container {
+            width: 100%;
+            height: 320px;
+            position: relative;
+        }
+        #word-cloud-container span {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        #word-cloud-container span:hover {
+            opacity: 0.7;
+        }
+    </style>
+    <div class="container">
+
+        <!-- Research Interest Word Cloud -->
+        <div class="row" style="margin-bottom: 0;">
+            <div class="col s12">
+                <div class="card-panel">
+                    <h5 class="center blue-text text-darken-2">Research Interest Cloud</h5>
+                    <p class="center grey-text" style="margin-top: 0; font-size: 0.9em;">Click a keyword to filter faculty by research area</p>
+                    <div id="word-cloud-container"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12">
+                <div class="card-panel">
+                    <h4 class="center">Faculty Directory</h4>
+
+                    <!-- Search and Filter Form -->
+                    <form id="faculty-filter-form" method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;">
+                        <div class="row" style="margin-bottom: 0;">
+                            <div class="input-field col s12 m4">
+                                <i class="material-icons prefix">search</i>
+                                <input id="search" type="text" name="search" value="@search">
+                                <label for="search" class="@if(!search.isEmpty){active}">Search by name</label>
+                            </div>
+                            <div class="input-field col s12 m4">
+                                <i class="material-icons prefix">business</i>
+                                <input id="department" type="text" name="department" value="@department">
+                                <label for="department" class="@if(!department.isEmpty){active}">Filter by department</label>
+                            </div>
+                            <div class="input-field col s12 m4">
+                                <i class="material-icons prefix">biotech</i>
+                                <input id="researchArea" type="text" name="researchArea" value="@researchArea">
+                                <label for="researchArea" class="@if(!researchArea.isEmpty){active}">Filter by research area</label>
+                            </div>
+                        </div>
+                        <div class="row center" style="margin-bottom: 10px;">
+                            <button type="submit" class="btn waves-effect waves-light blue darken-2" style="margin-right: 8px;">
+                                <i class="material-icons left">search</i>Search
+                            </button>
+                            <a href="/faculty" class="btn waves-effect waves-light grey darken-1">
+                                <i class="material-icons left">clear</i>Clear
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Faculty Cards -->
+                    <div class="row" style="margin-top: 10px;">
+                        @if(items == null || !items.isArray || items.size == 0) {
+                            <div class="col s12 center" style="padding: 40px 0;">
+                                <i class="material-icons large grey-text">person_search</i>
+                                <p class="grey-text">No faculty members found matching your search.</p>
+                            </div>
+                        } else {
+                            @for(i <- 0 until items.size) {
+                                @defining(items.get(i)) { f =>
+                                    <div class="col s12 m6 l4">
+                                        <div class="card hoverable">
+                                            <div class="card-content center">
+                                                @defining(if(f.has("avatar") && f.get("avatar").asText.nonEmpty) f.get("avatar").asText else "") { avatarUrl =>
+                                                    @if(avatarUrl.nonEmpty) {
+                                                        <img src="@avatarUrl" alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px; object-fit: cover;">
+                                                    } else {
+                                                        <img src='@routes.Assets.at("images/users/github.png")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
+                                                    }
+                                                }
+                                                <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">
+                                                    @defining(f.get("firstName").asText) { fn =>
+                                                        @defining(f.get("lastName").asText) { ln =>
+                                                            @if(fn.nonEmpty){Dr. }@fn @ln
+                                                        }
+                                                    }
+                                                </span>
+                                                @defining(f.get("department").asText) { dept =>
+                                                    @if(dept.nonEmpty) {
+                                                        <p style="color: #757575;">@dept</p>
+                                                    }
+                                                }
+                                                @defining(f.get("researchFields").asText) { rf =>
+                                                    @if(rf.nonEmpty) {
+                                                        <p><small class="grey-text">@rf</small></p>
+                                                    }
+                                                }
+                                                @defining(f.get("email").asText) { em =>
+                                                    @if(em.nonEmpty) {
+                                                        <p><small>@em</small></p>
+                                                    }
+                                                }
+                                            </div>
+                                            <div class="card-action center">
+                                                <a href="@routes.FacultyController.facultyDetail(f.get("id").asLong)" class="blue-text text-darken-2" style="font-weight: bold;">View Profile</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var facultyData = @Html(if (items != null && items.isArray) items.toString else "[]");
+        var wordMap = {};
+
+        for (var i = 0; i < facultyData.length; i++) {
+            var rf = facultyData[i].researchFields || "";
+            if (rf) {
+                var keywords = rf.split(/[,;]+/);
+                for (var j = 0; j < keywords.length; j++) {
+                    var kw = keywords[j].trim();
+                    if (kw.length > 1) {
+                        wordMap[kw] = (wordMap[kw] || 0) + 1;
+                    }
+                }
+            }
+        }
+
+        var wordArray = [];
+        for (var word in wordMap) {
+            if (wordMap.hasOwnProperty(word)) {
+                wordArray.push({
+                    text: word,
+                    weight: wordMap[word],
+                    handlers: {
+                        click: function() {
+                            var keyword = $(this).text();
+                            $("#researchArea").val(keyword);
+                            Materialize.updateTextFields();
+                            $("#faculty-filter-form").submit();
+                        }
+                    }
+                });
+            }
+        }
+
+        if (wordArray.length > 0) {
+            $("#word-cloud-container").jQCloud(wordArray, {
+                width: $("#word-cloud-container").width(),
+                height: 320,
+                autoResize: true,
+                colors: ["#0D47A1", "#1565C0", "#1976D2", "#1E88E5", "#2196F3", "#42A5F5", "#64B5F6", "#90CAF9", "#BBDEFB", "#E3F2FD"],
+                fontSize: { from: 0.12, to: 0.035 }
+            });
+        } else {
+            $("#word-cloud-container").closest(".card-panel").hide();
+        }
+    })();
+    </script>
+}

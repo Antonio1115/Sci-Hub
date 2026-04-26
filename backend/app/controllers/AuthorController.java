@@ -405,6 +405,93 @@ public class AuthorController extends Controller {
         return topResearchers();
     }
 
+    /**
+     * Link researcher user profiles to author records by email first and name second.
+     *
+     * @param overwriteExisting whether existing author_id links should be overwritten
+     * @return summary of links created and records requiring manual review
+     */
+    public Result linkResearchersToAuthors(Optional<Boolean> overwriteExisting) {
+        boolean overwrite = overwriteExisting.orElse(false);
+
+        int totalResearchers = 0;
+        int linked = 0;
+        int skippedExisting = 0;
+        int ambiguous = 0;
+
+        ArrayNode unmatched = Json.newArray();
+        ArrayNode ambiguousMatches = Json.newArray();
+
+        try {
+            List<ResearcherInfo> researcherInfos = ResearcherInfo.find.query().findList();
+
+            for (ResearcherInfo researcherInfo : researcherInfos) {
+                totalResearchers++;
+
+                if (researcherInfo == null || researcherInfo.getUser() == null) {
+                    continue;
+                }
+
+                if (!overwrite && researcherInfo.getAuthorId() != null) {
+                    skippedExisting++;
+                    continue;
+                }
+
+                User user = researcherInfo.getUser();
+                Author matchedAuthor = null;
+
+                String normalizedEmail = normalizeValue(user.getEmail());
+                if (!normalizedEmail.isEmpty()) {
+                    List<Author> authorsByEmail = Author.find.query().where().ieq("email", normalizedEmail).findList();
+                    if (authorsByEmail.size() == 1) {
+                        matchedAuthor = authorsByEmail.get(0);
+                    } else if (authorsByEmail.size() > 1) {
+                        ambiguous++;
+                        ambiguousMatches.add(createAmbiguousMatchEntry(user, "email", normalizedEmail, authorsByEmail));
+                        continue;
+                    }
+                }
+
+                if (matchedAuthor == null) {
+                    String displayName = buildResearcherDisplayName(user);
+                    if (!displayName.isEmpty()) {
+                        List<Author> authorsByName = Author.find.query().where().ieq("author_name", displayName).findList();
+                        if (authorsByName.size() == 1) {
+                            matchedAuthor = authorsByName.get(0);
+                        } else if (authorsByName.size() > 1) {
+                            ambiguous++;
+                            ambiguousMatches.add(createAmbiguousMatchEntry(user, "author_name", displayName, authorsByName));
+                            continue;
+                        }
+                    }
+                }
+
+                if (matchedAuthor == null) {
+                    unmatched.add(createUnmatchedEntry(user));
+                    continue;
+                }
+
+                researcherInfo.setAuthor(matchedAuthor);
+                researcherInfo.update();
+                linked++;
+            }
+
+            ObjectNode result = Json.newObject();
+            result.put("overwriteExisting", overwrite);
+            result.put("totalResearchers", totalResearchers);
+            result.put("linked", linked);
+            result.put("skippedExisting", skippedExisting);
+            result.put("ambiguous", ambiguous);
+            result.set("unmatched", unmatched);
+            result.set("ambiguousMatches", ambiguousMatches);
+
+            return ok(result);
+        } catch (Exception e) {
+            Logger.error("AuthorController.linkResearchersToAuthors() exception", e);
+            return internalServerError("Failed to link researcher profiles to author records.");
+        }
+    }
+
     public Result topAuthorsOld() {
         List<Author> authors = new ArrayList<>();
 
@@ -460,5 +547,48 @@ public class AuthorController extends Controller {
             Logger.debug("AuthorController.authorList exception: " + e.toString());
             return notFound("Author not found");
         }
+    }
+
+    private static String normalizeValue(String raw) {
+        return raw == null ? "" : raw.trim();
+    }
+
+    private static String buildResearcherDisplayName(User user) {
+        String firstName = normalizeValue(user.getFirstName());
+        String middleInitial = normalizeValue(user.getMiddleInitial());
+        String lastName = normalizeValue(user.getLastName());
+
+        if (!firstName.isEmpty() && !lastName.isEmpty()) {
+            return Author.createAuthorName(firstName, middleInitial, lastName).trim();
+        }
+
+        return normalizeValue(user.getUserName());
+    }
+
+    private static ObjectNode createUnmatchedEntry(User user) {
+        ObjectNode node = Json.newObject();
+        node.put("userId", user.getId());
+        node.put("userName", normalizeValue(user.getUserName()));
+        node.put("email", normalizeValue(user.getEmail()));
+        return node;
+    }
+
+    private static ObjectNode createAmbiguousMatchEntry(User user, String matchingField, String matchingValue,
+                                                         List<Author> candidateAuthors) {
+        ObjectNode entry = createUnmatchedEntry(user);
+        entry.put("matchingField", matchingField);
+        entry.put("matchingValue", matchingValue);
+
+        ArrayNode candidates = Json.newArray();
+        for (Author candidate : candidateAuthors) {
+            ObjectNode candidateNode = Json.newObject();
+            candidateNode.put("authorId", candidate.getId());
+            candidateNode.put("authorName", normalizeValue(candidate.getAuthorName()));
+            candidateNode.put("email", normalizeValue(candidate.getEmail()));
+            candidates.add(candidateNode);
+        }
+
+        entry.set("candidates", candidates);
+        return entry;
     }
 }

@@ -14,6 +14,10 @@ GET         /frequentlyAskedQuestions                                           
 GET         /popularQueries                                                                  controllers.AboutController.popularQueries()
 ########################################################## About ###################################################################################
 
+########################################################## Faculty ###################################################################################
+GET         /faculty                                                                         controllers.FacultyController.facultyList(search: java.util.Optional[String], department: java.util.Optional[String], researchArea: java.util.Optional[String])
+GET         /faculty/:id                                                                     controllers.FacultyController.facultyDetail(id: Long)
+########################################################## Faculty ###################################################################################
 
 
 
