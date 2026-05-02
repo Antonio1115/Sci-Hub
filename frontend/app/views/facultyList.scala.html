@@ -25,7 +25,26 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* keep name visible at top */
+            align-items: center;
+            padding: 12px;
+        }
+        .faculty-card .card-content .card-title {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        /* research fields should not grow the card; clamp to 3 lines with ellipsis */
+        .faculty-card .research-fields {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-height: 1.1em;
+            max-height: 3.4em; /* roughly 3 lines */
+            margin: 6px 0;
         }
         .faculty-card .card-action {
             flex-shrink: 0;
@@ -105,7 +124,7 @@
                                                 }
                                                 @defining(f.get("researchFields").asText) { rf =>
                                                     @if(rf.nonEmpty) {
-                                                        <p><small class="grey-text">@rf</small></p>
+                                                        <p class="research-fields"><small class="grey-text">@rf</small></p>
                                                     }
                                                 }
                                                 @defining(f.get("email").asText) { em =>
