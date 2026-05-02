@@ -49,7 +49,18 @@ public class FacultyController extends Controller {
             Logger.error("FacultyController.facultyList error", e);
         }
 
-        return ok(facultyList.render(items, searchVal, deptVal, researchVal));
+        // Always fetch unfiltered faculty for the word cloud
+        JsonNode allItems = null;
+        try {
+            JsonNode allResponse = RESTfulCalls.getAPI(RESTfulCalls.getBackendAPIUrl(config, FACULTY_LIST_API));
+            if (allResponse != null && allResponse.has("items")) {
+                allItems = allResponse.get("items");
+            }
+        } catch (Exception e) {
+            Logger.error("FacultyController.facultyList allItems error", e);
+        }
+
+        return ok(facultyList.render(items, allItems, searchVal, deptVal, researchVal));
     }
 
     public Result facultyDetail(Long id) {

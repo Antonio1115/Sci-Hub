@@ -1,4 +1,4 @@
-@(items: com.fasterxml.jackson.databind.JsonNode, search: String, department: String, researchArea: String)
+@(items: com.fasterxml.jackson.databind.JsonNode, allItems: com.fasterxml.jackson.databind.JsonNode, search: String, department: String, researchArea: String)
 @import helper._
 @main("Faculty Directory") {
     <script src='@routes.Assets.at("javascripts/plugins/jqcloud.min.js")'></script>
@@ -131,39 +131,55 @@
 
     <script>
     (function() {
-        var facultyData = @Html(if (items != null && items.isArray) items.toString else "[]");
+        var facultyData = @Html(if (allItems != null && allItems.isArray) allItems.toString else "[]");
+
+        var STOP_WORDS = {
+            "and": 1, "or": 1, "of": 1, "the": 1, "in": 1, "for": 1, "with": 1,
+            "on": 1, "a": 1, "an": 1, "to": 1, "at": 1, "by": 1, "from": 1,
+            "as": 1, "is": 1, "its": 1, "it": 1, "that": 1, "this": 1, "be": 1,
+            "are": 1, "was": 1, "were": 1, "has": 1, "have": 1, "had": 1,
+            "not": 1, "but": 1, "which": 1, "than": 1, "into": 1, "via": 1,
+            "using": 1, "based": 1, "applied": 1, "general": 1, "systems": 1
+        };
+
         var wordMap = {};
+        var displayMap = {};
 
         for (var i = 0; i < facultyData.length; i++) {
             var rf = facultyData[i].researchFields || "";
-            if (rf) {
-                var keywords = rf.split(/[,;]+/);
-                for (var j = 0; j < keywords.length; j++) {
-                    var kw = keywords[j].trim();
-                    if (kw.length > 1) {
-                        wordMap[kw] = (wordMap[kw] || 0) + 1;
-                    }
+            if (!rf) continue;
+            var keywords = rf.split(/[,;\/|]+/);
+            for (var j = 0; j < keywords.length; j++) {
+                var kw = keywords[j].trim().replace(/\s+/g, " ");
+                if (kw.length < 3) continue;
+                var key = kw.toLowerCase();
+                if (STOP_WORDS[key]) continue;
+                wordMap[key] = (wordMap[key] || 0) + 1;
+                if (!displayMap[key]) {
+                    displayMap[key] = kw.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
                 }
             }
         }
 
         var wordArray = [];
-        for (var word in wordMap) {
-            if (wordMap.hasOwnProperty(word)) {
-                wordArray.push({
-                    text: word,
-                    weight: wordMap[word],
-                    handlers: {
-                        click: function() {
-                            var keyword = $(this).text();
-                            $("#researchArea").val(keyword);
-                            Materialize.updateTextFields();
-                            $("#faculty-filter-form").submit();
-                        }
-                    }
-                });
+        for (var key in wordMap) {
+            if (wordMap.hasOwnProperty(key)) {
+                wordArray.push({ text: displayMap[key], weight: wordMap[key] });
             }
         }
+        wordArray.sort(function(a, b) { return b.weight - a.weight; });
+        wordArray = wordArray.slice(0, 80);
+
+        wordArray.forEach(function(item) {
+            item.handlers = {
+                click: function() {
+                    var keyword = $(this).text();
+                    $("#researchArea").val(keyword);
+                    Materialize.updateTextFields();
+                    $("#faculty-filter-form").submit();
+                }
+            };
+        });
 
         if (wordArray.length > 0) {
             $("#word-cloud-container").jQCloud(wordArray, {
