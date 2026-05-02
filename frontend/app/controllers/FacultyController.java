@@ -75,7 +75,7 @@ public class FacultyController extends Controller {
 
     private String encode(String value) {
         try {
-            return java.net.URLEncoder.encode(value, "UTF-8");
+            return java.net.URLEncoder.encode(value, "UTF-8").replace("+", "%20");
         } catch (Exception e) {
             return value;
         }
