@@ -8,6 +8,8 @@ import utils.RESTfulCalls;
 import views.html.*;
 
 import javax.inject.Inject;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class FacultyController extends Controller {
@@ -28,20 +30,17 @@ public class FacultyController extends Controller {
         String deptVal = department.orElse("");
         String researchVal = researchArea.orElse("");
 
-        StringBuilder url = new StringBuilder(RESTfulCalls.getBackendAPIUrl(config, FACULTY_LIST_API));
-        if (!searchVal.isEmpty() || !deptVal.isEmpty() || !researchVal.isEmpty()) {
-            url.append("?");
-            if (!searchVal.isEmpty()) url.append("search=").append(encode(searchVal)).append("&");
-            if (!deptVal.isEmpty()) url.append("department=").append(encode(deptVal)).append("&");
-            if (!researchVal.isEmpty()) url.append("researchArea=").append(encode(researchVal)).append("&");
-            if (url.charAt(url.length() - 1) == '&') {
-                url.setLength(url.length() - 1);
-            }
-        }
+        String baseUrl = RESTfulCalls.getBackendAPIUrl(config, FACULTY_LIST_API);
+        Map<String, String> params = new LinkedHashMap<>();
+        if (!searchVal.isEmpty()) params.put("search", searchVal);
+        if (!deptVal.isEmpty()) params.put("department", deptVal);
+        if (!researchVal.isEmpty()) params.put("researchArea", researchVal);
 
         JsonNode items = null;
         try {
-            JsonNode response = RESTfulCalls.getAPI(url.toString());
+            JsonNode response = params.isEmpty()
+                    ? RESTfulCalls.getAPI(baseUrl)
+                    : RESTfulCalls.getAPIWithParams(baseUrl, params);
             if (response != null && response.has("items")) {
                 items = response.get("items");
             }
@@ -49,7 +48,18 @@ public class FacultyController extends Controller {
             Logger.error("FacultyController.facultyList error", e);
         }
 
-        return ok(facultyList.render(items, searchVal, deptVal, researchVal));
+        // Always fetch unfiltered faculty for the word cloud
+        JsonNode allItems = null;
+        try {
+            JsonNode allResponse = RESTfulCalls.getAPI(baseUrl);
+            if (allResponse != null && allResponse.has("items")) {
+                allItems = allResponse.get("items");
+            }
+        } catch (Exception e) {
+            Logger.error("FacultyController.facultyList allItems error", e);
+        }
+
+        return ok(facultyList.render(items, allItems, searchVal, deptVal, researchVal));
     }
 
     public Result facultyDetail(Long id) {
@@ -60,13 +70,5 @@ public class FacultyController extends Controller {
             Logger.error("FacultyController.facultyDetail error", e);
         }
         return ok(facultyDetail.render(id, faculty));
-    }
-
-    private String encode(String value) {
-        try {
-            return java.net.URLEncoder.encode(value, "UTF-8");
-        } catch (Exception e) {
-            return value;
-        }
     }
 }
