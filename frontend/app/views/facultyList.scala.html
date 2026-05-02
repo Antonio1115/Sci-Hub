@@ -15,6 +15,21 @@
         #word-cloud-container span:hover {
             opacity: 0.7;
         }
+        .faculty-card {
+            display: flex;
+            flex-direction: column;
+            height: 220px;
+        }
+        .faculty-card .card-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .faculty-card .card-action {
+            flex-shrink: 0;
+        }
     </style>
     <div class="container">
 
@@ -74,16 +89,9 @@
                             @for(i <- 0 until items.size) {
                                 @defining(items.get(i)) { f =>
                                     <div class="col s12 m6 l4">
-                                        <div class="card hoverable">
+                                        <div class="card hoverable faculty-card">
                                             <div class="card-content center">
-                                                @defining(if(f.has("avatar") && f.get("avatar").asText.nonEmpty) f.get("avatar").asText else "") { avatarUrl =>
-                                                    @if(avatarUrl.nonEmpty) {
-                                                        <img src="@avatarUrl" alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px; object-fit: cover;">
-                                                    } else {
-                                                        <img src='@routes.Assets.at("images/users/github.png")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
-                                                    }
-                                                }
-                                                <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">
+                                                <span class="card-title" style="font-weight: bold; margin-top: 0; font-size: 1.2rem; line-height: 1.2;">
                                                     @defining(f.get("firstName").asText) { fn =>
                                                         @defining(f.get("lastName").asText) { ln =>
                                                             @if(fn.nonEmpty){Dr. }@fn @ln
