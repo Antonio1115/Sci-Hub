@@ -738,9 +738,6 @@ alter table rajob_application add constraint fk_rajob_application_applicant_id f
 create index ix_rajob_application_applicant_id on rajob_application (applicant_id);
 
 alter table researcher_info add constraint fk_researcher_info_user_id foreign key (user_id) references user (id) on delete restrict on update restrict;
-create index ix_researcher_info_author_id on researcher_info (author_id);
-
-alter table researcher_info add constraint fk_researcher_info_author_id foreign key (author_id) references author (id) on delete restrict on update restrict;
 
 alter table student_info add constraint fk_student_info_user_id foreign key (user_id) references user (id) on delete restrict on update restrict;
 

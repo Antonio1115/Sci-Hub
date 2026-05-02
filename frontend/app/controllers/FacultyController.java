@@ -29,10 +29,15 @@ public class FacultyController extends Controller {
         String researchVal = researchArea.orElse("");
 
         StringBuilder url = new StringBuilder(RESTfulCalls.getBackendAPIUrl(config, FACULTY_LIST_API));
-        url.append("?");
-        if (!searchVal.isEmpty()) url.append("search=").append(encode(searchVal)).append("&");
-        if (!deptVal.isEmpty()) url.append("department=").append(encode(deptVal)).append("&");
-        if (!researchVal.isEmpty()) url.append("researchArea=").append(encode(researchVal)).append("&");
+        if (!searchVal.isEmpty() || !deptVal.isEmpty() || !researchVal.isEmpty()) {
+            url.append("?");
+            if (!searchVal.isEmpty()) url.append("search=").append(encode(searchVal)).append("&");
+            if (!deptVal.isEmpty()) url.append("department=").append(encode(deptVal)).append("&");
+            if (!researchVal.isEmpty()) url.append("researchArea=").append(encode(researchVal)).append("&");
+            if (url.charAt(url.length() - 1) == '&') {
+                url.setLength(url.length() - 1);
+            }
+        }
 
         JsonNode items = null;
         try {
@@ -50,7 +55,7 @@ public class FacultyController extends Controller {
     public Result facultyDetail(Long id) {
         JsonNode faculty = null;
         try {
-            faculty = RESTfulCalls.getAPI(RESTfulCalls.getBackendAPIUrl(config, FACULTY_DETAIL_API + id));
+            faculty = RESTfulCalls.getAPI("http://127.0.0.1:9037" + FACULTY_DETAIL_API + id);
         } catch (Exception e) {
             Logger.error("FacultyController.facultyDetail error", e);
         }
