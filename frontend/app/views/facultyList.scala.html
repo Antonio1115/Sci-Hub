@@ -201,10 +201,10 @@
         if (wordArray.length > 0) {
             $("#word-cloud-container").jQCloud(wordArray, {
                 width: $("#word-cloud-container").width(),
-                height: 320,
+                height: 500,
                 autoResize: true,
                 colors: ["#0D47A1", "#1565C0", "#1976D2", "#1E88E5", "#2196F3", "#42A5F5", "#64B5F6", "#90CAF9", "#BBDEFB", "#E3F2FD"],
-                fontSize: { from: 0.12, to: 0.035 }
+                fontSize: { from: 0.07, to: 0.02 }
             });
         } else {
             $("#word-cloud-container").closest(".card-panel").hide();
