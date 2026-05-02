@@ -50,7 +50,7 @@
                     <h4 class="center">Faculty Directory</h4>
 
                     <!-- Search and Filter Form -->
-                    <form id="faculty-filter-form" method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;">
+                    <form id="faculty-filter-form" method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;" onsubmit="return submitFacultyForm(event)">
                         <div class="row" style="margin-bottom: 0;">
                             <div class="input-field col s12 m4">
                                 <i class="material-icons prefix">search</i>
@@ -130,6 +130,19 @@
     </div>
 
     <script>
+    function submitFacultyForm(e) {
+        e.preventDefault();
+        var params = [];
+        var s = document.getElementById("search").value.trim();
+        var d = document.getElementById("department").value.trim();
+        var r = document.getElementById("researchArea").value.trim();
+        if (s) params.push("search=" + encodeURIComponent(s));
+        if (d) params.push("department=" + encodeURIComponent(d));
+        if (r) params.push("researchArea=" + encodeURIComponent(r));
+        window.location.href = "/faculty" + (params.length ? "?" + params.join("&") : "");
+        return false;
+    }
+
     (function() {
         var facultyData = @Html(if (allItems != null && allItems.isArray) allItems.toString else "[]");
 
@@ -174,9 +187,13 @@
             item.handlers = {
                 click: function() {
                     var keyword = $(this).text();
-                    $("#researchArea").val(keyword);
-                    Materialize.updateTextFields();
-                    $("#faculty-filter-form").submit();
+                    var s = $("#search").val().trim();
+                    var d = $("#department").val().trim();
+                    var params = [];
+                    if (s) params.push("search=" + encodeURIComponent(s));
+                    if (d) params.push("department=" + encodeURIComponent(d));
+                    if (keyword) params.push("researchArea=" + encodeURIComponent(keyword));
+                    window.location.href = "/faculty" + (params.length ? "?" + params.join("&") : "");
                 }
             };
         });
