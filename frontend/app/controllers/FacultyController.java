@@ -55,7 +55,7 @@ public class FacultyController extends Controller {
     public Result facultyDetail(Long id) {
         JsonNode faculty = null;
         try {
-            faculty = RESTfulCalls.getAPI("http://127.0.0.1:9037" + FACULTY_DETAIL_API + id);
+            faculty = RESTfulCalls.getAPI(RESTfulCalls.getBackendAPIUrl(config, FACULTY_DETAIL_API + id));
         } catch (Exception e) {
             Logger.error("FacultyController.facultyDetail error", e);
         }
