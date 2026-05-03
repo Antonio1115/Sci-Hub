@@ -29,7 +29,7 @@ public class ResearcherInfo extends Model {
     
     private String department;
 
-    @Transient
+    @Column(name = "author_id")
     private Long authorId;
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER)

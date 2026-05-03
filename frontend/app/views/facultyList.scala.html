@@ -1,4 +1,4 @@
-@(items: com.fasterxml.jackson.databind.JsonNode, search: String, department: String, researchArea: String)
+@(items: com.fasterxml.jackson.databind.JsonNode, allItems: com.fasterxml.jackson.databind.JsonNode, search: String, department: String, researchArea: String)
 @import helper._
 @main("Faculty Directory") {
     <script src='@routes.Assets.at("javascripts/plugins/jqcloud.min.js")'></script>
@@ -14,6 +14,40 @@
         }
         #word-cloud-container span:hover {
             opacity: 0.7;
+        }
+        .faculty-card {
+            display: flex;
+            flex-direction: column;
+            height: 220px;
+        }
+        .faculty-card .card-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start; /* keep name visible at top */
+            align-items: center;
+            padding: 12px;
+        }
+        .faculty-card .card-content .card-title {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        /* research fields should not grow the card; clamp to 3 lines with ellipsis */
+        .faculty-card .research-fields {
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            line-height: 1.1em;
+            max-height: 3.4em; /* roughly 3 lines */
+            margin: 6px 0;
+        }
+        .faculty-card .card-action {
+            flex-shrink: 0;
         }
     </style>
     <div class="container">
@@ -35,7 +69,7 @@
                     <h4 class="center">Faculty Directory</h4>
 
                     <!-- Search and Filter Form -->
-                    <form id="faculty-filter-form" method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;">
+                    <form id="faculty-filter-form" method="GET" action="/faculty" style="margin-top: 20px; margin-bottom: 10px;" onsubmit="return submitFacultyForm(event)">
                         <div class="row" style="margin-bottom: 0;">
                             <div class="input-field col s12 m4">
                                 <i class="material-icons prefix">search</i>
@@ -74,16 +108,9 @@
                             @for(i <- 0 until items.size) {
                                 @defining(items.get(i)) { f =>
                                     <div class="col s12 m6 l4">
-                                        <div class="card hoverable">
+                                        <div class="card hoverable faculty-card">
                                             <div class="card-content center">
-                                                @defining(if(f.has("avatar") && f.get("avatar").asText.nonEmpty) f.get("avatar").asText else "") { avatarUrl =>
-                                                    @if(avatarUrl.nonEmpty) {
-                                                        <img src="@avatarUrl" alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px; object-fit: cover;">
-                                                    } else {
-                                                        <img src='@routes.Assets.at("images/users/github.png")' alt="Faculty Photo" class="circle responsive-img" style="width: 100px; height: 100px;">
-                                                    }
-                                                }
-                                                <span class="card-title" style="font-weight: bold; margin-top: 10px; font-size: 1.2rem; line-height: 1.2;">
+                                                <span class="card-title" style="font-weight: bold; margin-top: 0; font-size: 1.2rem; line-height: 1.2;">
                                                     @defining(f.get("firstName").asText) { fn =>
                                                         @defining(f.get("lastName").asText) { ln =>
                                                             @if(fn.nonEmpty){Dr. }@fn @ln
@@ -97,7 +124,7 @@
                                                 }
                                                 @defining(f.get("researchFields").asText) { rf =>
                                                     @if(rf.nonEmpty) {
-                                                        <p><small class="grey-text">@rf</small></p>
+                                                        <p class="research-fields"><small class="grey-text">@rf</small></p>
                                                     }
                                                 }
                                                 @defining(f.get("email").asText) { em =>
@@ -122,48 +149,81 @@
     </div>
 
     <script>
+    function submitFacultyForm(e) {
+        e.preventDefault();
+        var params = [];
+        var s = document.getElementById("search").value.trim();
+        var d = document.getElementById("department").value.trim();
+        var r = document.getElementById("researchArea").value.trim();
+        if (s) params.push("search=" + encodeURIComponent(s));
+        if (d) params.push("department=" + encodeURIComponent(d));
+        if (r) params.push("researchArea=" + encodeURIComponent(r));
+        window.location.href = "/faculty" + (params.length ? "?" + params.join("&") : "");
+        return false;
+    }
+
     (function() {
-        var facultyData = @Html(if (items != null && items.isArray) items.toString else "[]");
+        var facultyData = @Html(if (allItems != null && allItems.isArray) allItems.toString else "[]");
+
+        var STOP_WORDS = {
+            "and": 1, "or": 1, "of": 1, "the": 1, "in": 1, "for": 1, "with": 1,
+            "on": 1, "a": 1, "an": 1, "to": 1, "at": 1, "by": 1, "from": 1,
+            "as": 1, "is": 1, "its": 1, "it": 1, "that": 1, "this": 1, "be": 1,
+            "are": 1, "was": 1, "were": 1, "has": 1, "have": 1, "had": 1,
+            "not": 1, "but": 1, "which": 1, "than": 1, "into": 1, "via": 1,
+            "using": 1, "based": 1, "applied": 1, "general": 1, "systems": 1
+        };
+
         var wordMap = {};
+        var displayMap = {};
 
         for (var i = 0; i < facultyData.length; i++) {
             var rf = facultyData[i].researchFields || "";
-            if (rf) {
-                var keywords = rf.split(/[,;]+/);
-                for (var j = 0; j < keywords.length; j++) {
-                    var kw = keywords[j].trim();
-                    if (kw.length > 1) {
-                        wordMap[kw] = (wordMap[kw] || 0) + 1;
-                    }
+            if (!rf) continue;
+            var keywords = rf.split(/[,;\/|]+/);
+            for (var j = 0; j < keywords.length; j++) {
+                var kw = keywords[j].trim().replace(/\s+/g, " ");
+                if (kw.length < 3) continue;
+                var key = kw.toLowerCase();
+                if (STOP_WORDS[key]) continue;
+                wordMap[key] = (wordMap[key] || 0) + 1;
+                if (!displayMap[key]) {
+                    displayMap[key] = kw.replace(/\b\w/g, function(c) { return c.toUpperCase(); });
                 }
             }
         }
 
         var wordArray = [];
-        for (var word in wordMap) {
-            if (wordMap.hasOwnProperty(word)) {
-                wordArray.push({
-                    text: word,
-                    weight: wordMap[word],
-                    handlers: {
-                        click: function() {
-                            var keyword = $(this).text();
-                            $("#researchArea").val(keyword);
-                            Materialize.updateTextFields();
-                            $("#faculty-filter-form").submit();
-                        }
-                    }
-                });
+        for (var key in wordMap) {
+            if (wordMap.hasOwnProperty(key)) {
+                wordArray.push({ text: displayMap[key], weight: wordMap[key] });
             }
         }
+        wordArray.sort(function(a, b) { return b.weight - a.weight; });
+        wordArray = wordArray.slice(0, 150);
+
+        wordArray.forEach(function(item) {
+            item.handlers = {
+                click: function() {
+                    var keyword = $(this).text();
+                    var s = $("#search").val().trim();
+                    var d = $("#department").val().trim();
+                    var params = [];
+                    if (s) params.push("search=" + encodeURIComponent(s));
+                    if (d) params.push("department=" + encodeURIComponent(d));
+                    if (keyword) params.push("researchArea=" + encodeURIComponent(keyword));
+                    window.location.href = "/faculty" + (params.length ? "?" + params.join("&") : "");
+                }
+            };
+        });
 
         if (wordArray.length > 0) {
             $("#word-cloud-container").jQCloud(wordArray, {
                 width: $("#word-cloud-container").width(),
-                height: 320,
+                height: 500,
                 autoResize: true,
                 colors: ["#0D47A1", "#1565C0", "#1976D2", "#1E88E5", "#2196F3", "#42A5F5", "#64B5F6", "#90CAF9", "#BBDEFB", "#E3F2FD"],
-                fontSize: { from: 0.12, to: 0.035 }
+                fontSize: { from: 0.07, to: 0.02 }
             });
         } else {
             $("#word-cloud-container").closest(".card-panel").hide();

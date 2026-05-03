@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.TimeUnit;
@@ -157,6 +158,29 @@ public class RESTfulCalls {
         }
 
 
+    }
+
+    public static JsonNode getAPIWithParams(String apiString, Map<String, String> params) {
+        try {
+            play.libs.ws.WSRequest request = WS.url(apiString)
+                    .setRequestTimeout(Duration.ofSeconds(30000));
+            for (Map.Entry<String, String> entry : params.entrySet()) {
+                request = request.setQueryParameter(entry.getKey(), entry.getValue());
+            }
+            CompletionStage<WSResponse> responsePromise = request.get();
+            CompletionStage<JsonNode> bodyPromise = responsePromise.thenApplyAsync(response -> {
+                if (response.getStatus() == 200 || response.getStatus() == 201) {
+                    return response.asJson();
+                } else {
+                    Logger.info("" + response.getStatus());
+                    return createResponse(ResponseType.GETERROR);
+                }
+            });
+            return bodyPromise.toCompletableFuture().get(30000, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            System.out.println("getAPIWithParams exception: " + e);
+            return createResponse(ResponseType.TIMEOUT);
+        }
     }
 
     public static JsonNode getAPIParameter(String apiString, String paraName, String para) {
